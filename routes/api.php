@@ -47,6 +47,7 @@ Route::get('/about-app', [AboutAppController::class, 'index']);
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/forgot-password', function (Request $request) {
     $request->validate(['email' => 'required|email']);
 
@@ -82,6 +83,9 @@ Route::post('/reset-password', function (Request $request) {
 
 
 Route::middleware('auth:sanctum')->group(function () {
+
+    Route::post('/logout', [AuthController::class, 'logout']);
+
     Route::post('/predict', [StuntingPredictController::class, 'predict']);
     Route::get('/export/{id}', [StuntingPredictController::class, 'export']);
     Route::get('/history', [StuntingPredictController::class, 'history']);

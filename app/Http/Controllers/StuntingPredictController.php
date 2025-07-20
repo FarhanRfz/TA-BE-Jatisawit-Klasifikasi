@@ -19,9 +19,9 @@ class StuntingPredictController extends Controller
         // Validasi input dari frontend
         $request->validate([
             'nama_anak' => 'required|string|max:100',
-            'umur' => 'required|numeric|min:0|max:60',
-            'berat_badan' => 'required|numeric|min:0|max:50',
-            'tinggi_badan' => 'required|numeric|min:0|max:150',
+            'umur' => 'required|numeric|min:6|max:24',
+            'berat_badan' => 'required|numeric|min:4|max:16',
+            'tinggi_badan' => 'required|numeric|min:60|max:100',
             'jenis_kelamin' => 'required|in:laki-laki,perempuan',
         ]);
 
@@ -59,7 +59,6 @@ class StuntingPredictController extends Controller
     ]),
     default => 'Tidak dapat menentukan status stunting anak.',
 };
-
 
         // Simpan ke classification_history
         $classification = ClassificationHistory::create([

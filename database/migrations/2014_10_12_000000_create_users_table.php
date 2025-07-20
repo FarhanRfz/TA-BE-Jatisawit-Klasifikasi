@@ -18,6 +18,9 @@ return new class extends Migration
             $table->string('password');
             $table->string('nama_lengkap_orangtua');
             $table->string('role')->default('user'); // default: user
+            $table->string('otp_code')->nullable();
+            $table->dateTime('otp_expires_at')->nullable();
+            $table->boolean('is_verified')->default(false);
             $table->rememberToken();
             $table->timestamps();
         });

@@ -5,11 +5,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Mail\OtpVerificationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Mail;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
@@ -23,16 +26,59 @@ class AuthController extends Controller
             'nama_lengkap_orangtua' => 'required|string',
         ]);
 
+        // Generate OTP
+        $otp = rand(100000, 999999);
+
         $user = User::create([
             'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'nama_lengkap_orangtua' => $request->nama_lengkap_orangtua,
             'role' => 'user',
+            'otp_code' => $otp,
+            'otp_expires_at' => Carbon::now()->addMinutes(10),
+            'is_verified' => false,
         ]);
 
-        return response()->json(['message' => 'Registrasi berhasil'], 201);
+        // Kirim email OTP
+        Mail::to($user->email)->send(
+            new OtpVerificationMail($otp)
+        );
+
+        return response()->json(['message' => 'Registrasi berhasil! Cek email Anda untuk OTP.'], 201);
     }
+
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp_code' => 'required|numeric',
+        ]);
+
+        $user = User::where('email', $request->email)
+            ->where('otp_code', $request->otp_code)
+            ->where('otp_expires_at', '>', now())
+            ->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'OTP tidak valid atau sudah kedaluwarsa'], 400);
+        }
+
+        $user->is_verified = true;
+        $user->otp_code = null;
+        $user->otp_expires_at = null;
+        $user->save();
+
+        // Auto login
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Verifikasi berhasil',
+            'token' => $token,
+            'role' => $user->role,
+        ]);
+    }
+
 
     // LOGIN
     public function login(Request $request)
@@ -48,6 +94,10 @@ class AuthController extends Controller
             return response()->json(['message' => 'Username atau password salah'], 401);
         }
 
+        if (!$user->is_verified) {
+            return response()->json(['message' => 'Akun belum diverifikasi. Silakan cek email untuk OTP.'], 403);
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -61,7 +111,6 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
-
         return response()->json(['message' => 'Logout berhasil']);
     }
 
@@ -101,4 +150,3 @@ class AuthController extends Controller
             : response()->json(['message' => __($status)], 400);
     }
 }
-

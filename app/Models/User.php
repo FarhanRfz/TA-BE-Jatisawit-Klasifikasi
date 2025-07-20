@@ -23,6 +23,9 @@ class User extends Authenticatable
         'password',
         'nama_lengkap_orangtua',
         'role',
+        'otp_code',
+        'otp_expires_at',
+        'is_verified',
     ];
 
     protected $hidden = [

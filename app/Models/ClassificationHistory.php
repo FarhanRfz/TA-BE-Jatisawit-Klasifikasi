@@ -34,9 +34,9 @@ class ClassificationHistory extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'umur' => 'integer',
-        'berat_badan' => 'decimal:2',
-        'tinggi_badan' => 'decimal:2',
+        // 'umur' => 'integer',
+        // 'berat_badan' => 'decimal:2',
+        // 'tinggi_badan' => 'decimal:2',
         'waktu_klasifikasi' => 'datetime',
         'exported' => 'boolean',
     ];

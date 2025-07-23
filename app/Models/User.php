@@ -2,18 +2,28 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-// use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Auth\Notifications\ResetPassword;
 use App\Notifications\ResetPasswordCustomNotification;
+use App\Models\ClassificationHistory;
 
 class User extends Authenticatable
 {
     use HasApiTokens, Notifiable;
-
+    
+    public function classificationHistory()
+    {
+        return $this->hasMany(ClassificationHistory::class, 'id_users', 'id_users');
+    }
+    
+    public function sendPasswordResetNotification($token)
+    {
+        $url = 'http://localhost:5173/reset-password?token=' . $token;
+    
+        $this->notify(new ResetPasswordCustomNotification($url));
+    }
     protected $table = 'users';
     protected $primaryKey = 'id_users';
 
@@ -37,15 +47,4 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function classificationHistories()
-    {
-        return $this->hasMany(\App\Models\ClassificationHistory::class, 'id_users', 'id_users');
-    }
-
-    public function sendPasswordResetNotification($token)
-{
-    $url = 'http://localhost:5173/reset-password?token=' . $token;
-
-    $this->notify(new ResetPasswordCustomNotification($url));
-}
 }

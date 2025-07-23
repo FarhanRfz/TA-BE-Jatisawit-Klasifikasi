@@ -49,16 +49,16 @@ class StuntingPredictController extends Controller
 
         // Deskripsi status berdasarkan hasil
         $deskripsiStatus = match ($stuntingStatus) {
-    'stunting' => Arr::random([
-        'Anak berisiko stunting. Konsultasikan ke puskesmas.',
-        'Perhatikan pola makan dan pertumbuhan anak secara berkala.',
-    ]),
-    'normal' => Arr::random([
-        'Status normal berdasarkan data yang diberikan.',
-        'Pertumbuhan anak sesuai standar WHO, lanjutkan pemantauan.',
-    ]),
-    default => 'Tidak dapat menentukan status stunting anak.',
-};
+            'stunting' => Arr::random([
+                'Anak berisiko stunting. Konsultasikan ke puskesmas.',
+                'Perhatikan pola makan dan pertumbuhan anak secara berkala.',
+            ]),
+            'normal' => Arr::random([
+                'Status normal berdasarkan data yang diberikan.',
+                'Pertumbuhan anak sesuai standar WHO, lanjutkan pemantauan.',
+            ]),
+            default => 'Tidak dapat menentukan status stunting anak.',
+        };
 
         // Simpan ke classification_history
         $classification = ClassificationHistory::create([
@@ -93,14 +93,23 @@ class StuntingPredictController extends Controller
 
         $pdf = Pdf::loadView('pdf.klasifikasi', ['data' => $classification]);
 
-    return $pdf->download('hasil_klasifikasi_anak_' . $classification->nama_anak . '.pdf');
-}
+        return $pdf->download('hasil_klasifikasi_anak_' . $classification->nama_anak . '.pdf');
+    }
 
     public function history()
     {
-        $user = Auth::user();
-        $history = $user->classificationHistories()->latest()->get();
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['error' => 'Pengguna tidak terautentikasi.'], 401);
+            }
 
-        return response()->json($history);
+  // Gunakan () untuk mengakses query builder
+        $history = $user->classificationHistory()->latest('waktu_klasifikasi')->get();
+
+            return response()->json($history);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Gagal mengambil riwayat klasifikasi.'], 500);
+        }
     }
 }

@@ -49,24 +49,24 @@ class PuskesmasProfileController extends Controller
 
         // Upload gambar jika ada
         if ($request->hasFile('foto_bersama')) {
-            // if ($profil && $profil->foto_bersama) {
-            //     Storage::delete('public/' . $profil->foto_bersama);
-            // }
-            $data['foto_bersama'] = $request->file('foto_bersama')->store('puskesmas', 'public');
+            if ($profil && $profil->foto_bersama) {
+                Storage::delete('public/' . $profil->foto_bersama);
+            }
+            $data['foto_bersama'] = $request->file('foto_bersama')->store('puskesmas/foto_bersama', 'public');
         }
 
         if ($request->hasFile('struktur_organisasi')) {
-            // if ($profil && $profil->struktur_organisasi) {
-            //     Storage::delete('public/' . $profil->struktur_organisasi);
-            // }
-            $data['struktur_organisasi'] = $request->file('struktur_organisasi')->store('puskesmas', 'public');
+            if ($profil && $profil->struktur_organisasi) {
+                Storage::delete('public/' . $profil->struktur_organisasi);
+            }
+            $data['struktur_organisasi'] = $request->file('struktur_organisasi')->store('puskesmas/struktur_organisasi', 'public');
         }
 
         if ($request->hasFile('peta_wilayah_kerja')) {
-            // if ($profil && $profil->peta_wilayah_kerja) {
-            //     Storage::delete('public/' . $profil->peta_wilayah_kerja);
-            // }
-            $data['peta_wilayah_kerja'] = $request->file('peta_wilayah_kerja')->store('puskesmas', 'public');
+            if ($profil && $profil->peta_wilayah_kerja) {
+                Storage::delete('public/' . $profil->peta_wilayah_kerja);
+            }
+            $data['peta_wilayah_kerja'] = $request->file('peta_wilayah_kerja')->store('puskesmas/peta_wilayah_kerja', 'public');
         }
 
         if ($profil) {

@@ -85,7 +85,8 @@ Route::post('/reset-password', function (Request $request) {
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
-
+    Route::get('/user', [AuthController::class, 'getUser']);
+    Route::put('/user/update', [AuthController::class, 'updateUser']);
     Route::post('/predict', [StuntingPredictController::class, 'predict']);
     Route::get('/export/{id}', [StuntingPredictController::class, 'export']);
     Route::get('/history', [StuntingPredictController::class, 'history']);

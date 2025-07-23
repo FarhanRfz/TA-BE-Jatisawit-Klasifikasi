@@ -1,7 +1,5 @@
 <?php
 
-// app/Http/Controllers/AuthController.php
-
 namespace App\Http\Controllers;
 
 use App\Models\User;
@@ -13,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
+use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
@@ -78,7 +77,6 @@ class AuthController extends Controller
             'role' => $user->role,
         ]);
     }
-
 
     // LOGIN
     public function login(Request $request)
@@ -149,4 +147,48 @@ class AuthController extends Controller
             ? response()->json(['message' => 'Password berhasil direset.'])
             : response()->json(['message' => __($status)], 400);
     }
+
+    public function getUser(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['error' => 'Pengguna tidak terautentikasi.'], 401);
+        }
+
+        return response()->json([
+            'data' => [
+                'username' => $user->username,
+                'email' => $user->email,
+                'full_name' => $user->nama_lengkap_orangtua,
+            ],
+        ]);
+    }
+
+public function updateUser(Request $request)
+{
+    $user = Auth::user();
+    if (!$user) {
+        return response()->json(['error' => 'Pengguna tidak terautentikasi.'], 401);
+    }
+
+    $request->validate([
+        'email' => ['sometimes', 'email', Rule::unique('users', 'email')->ignore($user->id_users, 'id_users')],
+        'full_name' => 'sometimes|string|max:255',
+        'password' => 'nullable|confirmed|min:8',
+        'password_confirmation' => 'nullable|same:password',
+    ]);
+
+    $data = $request->only(['email', 'full_name']);
+    if ($request->filled('password')) {
+        $data['password'] = Hash::make($request->password);
+    }
+
+    // Tambahkan pengecekan apakah update berhasil
+    $updated = $user->update($data);
+    if (!$updated) {
+        return response()->json(['error' => 'Gagal memperbarui profil.'], 500);
+    }
+
+    return response()->json(['message' => 'Profil berhasil diperbarui!']);
+}
 }

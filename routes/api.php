@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\PuskesmasProfileController;
+
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Http\Request;
@@ -9,9 +9,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AboutAppController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PuskesmasContactController;
-use App\Http\Controllers\PuskesmasProfilController;
+use App\Http\Controllers\PuskesmasProfileController;
 use App\Http\Controllers\StuntingEducationController;
 use App\Http\Controllers\StuntingPredictController;
+use App\Http\Controllers\OrtuAnakController;
 
 /*
 |--------------------------------------------------------------------------
@@ -90,6 +91,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/predict', [StuntingPredictController::class, 'predict']);
     Route::get('/export/{id}', [StuntingPredictController::class, 'export']);
     Route::get('/history', [StuntingPredictController::class, 'history']);
+    
+    Route::prefix('admin')->group(function () {
+        Route::get('/ortu-anak', [OrtuAnakController::class, 'index']);
+        Route::post('/ortu-anak', [OrtuAnakController::class, 'store']);
+        Route::get('/ortu-anak/{id_ota}', [OrtuAnakController::class, 'show']);
+        Route::put('/ortu-anak/{id_ota}', [OrtuAnakController::class, 'update']);
+        Route::delete('/ortu-anak/{id_ota}', [OrtuAnakController::class, 'destroy']);
+    });
 });
 
 

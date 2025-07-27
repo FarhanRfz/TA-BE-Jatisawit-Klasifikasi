@@ -4,63 +4,67 @@ namespace App\Http\Controllers;
 
 use App\Models\AboutApp;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AboutAppController extends Controller
 {
-
     public function index()
-{
-    $setting = AboutApp::first();
+    {
+        $setting = AboutApp::first();
 
-    if (!$setting) {
+        if (!$setting) {
+            return response()->json([
+                'message' => 'Belum ada data pengaturan aplikasi',
+                'data' => null
+            ], 200);
+        }
+
         return response()->json([
-            'message' => 'Belum ada data pengaturan aplikasi',
-            'data' => null
-        ], 200);
+            'message' => 'Data pengaturan aplikasi ditemukan',
+            'data' => $setting
+        ]);
     }
 
-    return response()->json([
-        'message' => 'Data pengaturan aplikasi ditemukan',
-        'data' => $setting
-    ]);
-}
+    public function storeOrUpdate(Request $request)
+    {
+        $setting = AboutApp::first() ?? new AboutApp();
 
+        $request->validate([
+            'logo_dinas' => 'nullable|image|mimes:jpg,jpeg,png|max:3072',
+            'logo_puskesmas' => 'nullable|image|mimes:jpg,jpeg,png|max:3072',
+            'nama_aplikasi' => 'nullable|string|max:255',
+        ]);
 
-public function storeOrUpdate(Request $request)
-{
-    $setting = AboutApp::first() ?? new AboutApp();
+        // Handle logo dinas
+        if ($request->hasFile('logo_dinas') && $request->file('logo_dinas')->isValid()) {
+            if ($setting->logo_dinas) {
+                Storage::delete('public/' . str_replace('storage/', '', $setting->logo_dinas));
+            }
+            $data['logo_dinas'] = $request->file('logo_dinas')->store('logos/logo_dinas', 'public');
+        }
 
-    $request->validate([
-        'logo_dinas' => 'nullable|image|mimes:jpg,jpeg,png|max:3072',
-        'logo_puskesmas' => 'nullable|image|mimes:jpg,jpeg,png|max:3072',
-        'nama_aplikasi' => 'nullable|string|max:255',
-    ]);
+        // Handle logo puskesmas
+        if ($request->hasFile('logo_puskesmas') && $request->file('logo_puskesmas')->isValid()) {
+            if ($setting->logo_puskesmas) {
+                Storage::delete('public/' . str_replace('storage/', '', $setting->logo_puskesmas));
+            }
+            $data['logo_puskesmas'] = $request->file('logo_puskesmas')->store('logos/logo_puskesmas', 'public');
+        }
 
-    if ($request->hasFile('logo_dinas') && $request->file('logo_dinas')->isValid()) {
-    $file = $request->file('logo_dinas');
-    $path = $file->store('logos', 'public'); // disimpan di storage/app/public/logos
-    $setting->logo_dinas = 'storage/' . $path; // agar bisa diakses via URL
-}
+        // Handle nama aplikasi
+        if ($request->filled('nama_aplikasi')) {
+            $data['nama_aplikasi'] = $request->nama_aplikasi;
+        }
 
-if ($request->hasFile('logo_puskesmas') && $request->file('logo_puskesmas')->isValid()) {
-    $file = $request->file('logo_puskesmas');
-    $path = $file->store('logos', 'public');
-    $setting->logo_puskesmas = 'storage/' . $path;
-}
+        // Simpan atau perbarui data
+        if (isset($data)) {
+            $setting->fill($data);
+            $setting->save();
+        }
 
-
-    if ($request->filled('nama_aplikasi')) {
-        $setting->nama_aplikasi = $request->nama_aplikasi;
+        return response()->json([
+            'message' => 'Data berhasil disimpan',
+            'data' => $setting
+        ]);
     }
-
-    $setting->save();
-
-    return response()->json([
-        'message' => 'Data berhasil disimpan',
-        'data' => $setting
-    ]);
-}
-
-
-
 }

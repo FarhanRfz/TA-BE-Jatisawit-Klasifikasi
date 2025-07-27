@@ -18,33 +18,46 @@ class AuthController extends Controller
     // REGISTER
     public function register(Request $request)
     {
-        $request->validate([
-            'username' => 'required|string|unique:users,username',
-            'email' => 'required|email|unique:users,email',
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'nama_lengkap_orangtua' => 'required|string',
-        ]);
+        try {
+            $request->validate([
+                'username' => 'required|string|unique:users,username',
+                'email' => 'required|email|unique:users,email',
+                'password' => ['required', 'confirmed', Rules\Password::defaults()],
+                'nama_lengkap_orangtua' => 'required|string',
+            ], [
+                'username.unique' => 'Username sudah digunakan.',
+                'email.unique' => 'Email sudah digunakan.',
+            ]);
 
-        // Generate OTP
-        $otp = rand(100000, 999999);
+            // Generate OTP
+            $otp = rand(100000, 999999);
 
-        $user = User::create([
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'nama_lengkap_orangtua' => $request->nama_lengkap_orangtua,
-            'role' => 'user',
-            'otp_code' => $otp,
-            'otp_expires_at' => Carbon::now()->addMinutes(10),
-            'is_verified' => false,
-        ]);
+            $user = User::create([
+                'username' => $request->username,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'nama_lengkap_orangtua' => $request->nama_lengkap_orangtua,
+                'role' => 'user',
+                'otp_code' => $otp,
+                'otp_expires_at' => Carbon::now()->addMinutes(10),
+                'is_verified' => false,
+            ]);
 
-        // Kirim email OTP
-        Mail::to($user->email)->send(
-            new OtpVerificationMail($otp)
-        );
+            // Kirim email OTP
+            Mail::to($user->email)->send(
+                new OtpVerificationMail($otp)
+            );
 
-        return response()->json(['message' => 'Registrasi berhasil! Cek email Anda untuk OTP.'], 201);
+            return response()->json(['message' => 'Registrasi berhasil! Cek email Anda untuk OTP.'], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errors = $e->validator->errors()->getMessages();
+            return response()->json([
+                'message' => 'Validasi gagal',
+                'errors' => $errors
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Terjadi kesalahan server'], 500);
+        }
     }
 
     public function verifyOtp(Request $request)
@@ -88,15 +101,24 @@ class AuthController extends Controller
 
         $user = User::where('username', $request->username)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user) {
+            info('Login failed: User not found for username ' . $request->username);
+            return response()->json(['message' => 'Username atau password salah'], 401);
+        }
+
+        if (!Hash::check($request->password, $user->password)) {
+            info('Login failed: Password mismatch for username ' . $request->username);
             return response()->json(['message' => 'Username atau password salah'], 401);
         }
 
         if (!$user->is_verified) {
+            info('Login failed: Account not verified for username ' . $request->username);
             return response()->json(['message' => 'Akun belum diverifikasi. Silakan cek email untuk OTP.'], 403);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        info('Login successful for username ' . $request->username . ' with role ' . $user->role);
 
         return response()->json([
             'token' => $token,
@@ -164,31 +186,31 @@ class AuthController extends Controller
         ]);
     }
 
-public function updateUser(Request $request)
-{
-    $user = Auth::user();
-    if (!$user) {
-        return response()->json(['error' => 'Pengguna tidak terautentikasi.'], 401);
+    public function updateUser(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['error' => 'Pengguna tidak terautentikasi.'], 401);
+        }
+
+        $request->validate([
+            'email' => ['sometimes', 'email', Rule::unique('users', 'email')->ignore($user->id_users, 'id_users')],
+            'full_name' => 'sometimes|string|max:255',
+            'password' => 'nullable|confirmed|min:8',
+            'password_confirmation' => 'nullable|same:password',
+        ]);
+
+        $data = $request->only(['email', 'full_name']);
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        // Tambahkan pengecekan apakah update berhasil
+        $updated = $user->update($data);
+        if (!$updated) {
+            return response()->json(['error' => 'Gagal memperbarui profil.'], 500);
+        }
+
+        return response()->json(['message' => 'Profil berhasil diperbarui!']);
     }
-
-    $request->validate([
-        'email' => ['sometimes', 'email', Rule::unique('users', 'email')->ignore($user->id_users, 'id_users')],
-        'full_name' => 'sometimes|string|max:255',
-        'password' => 'nullable|confirmed|min:8',
-        'password_confirmation' => 'nullable|same:password',
-    ]);
-
-    $data = $request->only(['email', 'full_name']);
-    if ($request->filled('password')) {
-        $data['password'] = Hash::make($request->password);
-    }
-
-    // Tambahkan pengecekan apakah update berhasil
-    $updated = $user->update($data);
-    if (!$updated) {
-        return response()->json(['error' => 'Gagal memperbarui profil.'], 500);
-    }
-
-    return response()->json(['message' => 'Profil berhasil diperbarui!']);
-}
 }

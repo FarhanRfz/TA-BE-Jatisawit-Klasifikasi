@@ -17,6 +17,8 @@ class AdminSeeder extends Seeder
             User::create([
                 'username' => 'adminpuskesmas1',
                 'password' => Hash::make('Jatisawit1'), // Ganti dengan password yang kuat
+                'email' => 'puskesmasjatisawitjtb@gmail.com',
+                'nama_lengkap_orangtua' => 'Admin Puskesmas Jatisawit',
                 'role' => 'admin',
                 'created_at' => now(),
                 'updated_at' => now(),

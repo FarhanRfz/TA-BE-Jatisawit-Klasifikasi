@@ -26,6 +26,7 @@ class ClassificationHistory extends Model
         'deskripsi_status',
         'waktu_klasifikasi',
         'exported',
+        'file_path',
     ];
 
     /**

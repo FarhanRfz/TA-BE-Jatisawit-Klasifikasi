@@ -15,6 +15,11 @@ use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('throttle:6,1')->only('login');
+    }
+
     // REGISTER
     public function register(Request $request)
     {
@@ -117,6 +122,7 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
+        $expiry = config('sanctum.expiration', 60); // Default 60 menit jika tidak diatur
 
         info('Login successful for username ' . $request->username . ' with role ' . $user->role);
 
@@ -124,6 +130,7 @@ class AuthController extends Controller
             'token' => $token,
             'role' => $user->role,
             'user' => $user,
+            'token_expires_in_minutes' => $expiry,
         ]);
     }
 
@@ -181,7 +188,7 @@ class AuthController extends Controller
             'data' => [
                 'username' => $user->username,
                 'email' => $user->email,
-                'full_name' => $user->nama_lengkap_orangtua,
+                'nama_lengkap_orangtua' => $user->nama_lengkap_orangtua,
             ],
         ]);
     }
@@ -195,12 +202,12 @@ class AuthController extends Controller
 
         $request->validate([
             'email' => ['sometimes', 'email', Rule::unique('users', 'email')->ignore($user->id_users, 'id_users')],
-            'full_name' => 'sometimes|string|max:255',
+            'nama_lengkap_orangtua' => 'sometimes|string|max:255',
             'password' => 'nullable|confirmed|min:8',
             'password_confirmation' => 'nullable|same:password',
         ]);
 
-        $data = $request->only(['email', 'full_name']);
+        $data = $request->only(['nama_lengkap_orangtua']);
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }

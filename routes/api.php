@@ -100,6 +100,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/ortu-anak/{id_ota}', [OrtuAnakController::class, 'update']);
         Route::delete('/ortu-anak/{id_ota}', [OrtuAnakController::class, 'destroy']);
         Route::get('/history', [StuntingPredictController::class, 'adminHistory']);
+        Route::get('/riwayat-klasifikasi/total', [StuntingPredictController::class, 'getTotalRiwayat']);
     });
 });
 

@@ -3,12 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\ClassificationHistory;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Response;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 
@@ -150,5 +148,16 @@ class StuntingPredictController extends Controller
     $history = ClassificationHistory::with('user')->get();
 
     return response()->json($history);
+}
+
+public function getTotalRiwayat()
+{
+    $user = Auth::user();
+    if (!$user || $user->role !== 'admin') {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    $total = ClassificationHistory::count();
+    return response()->json(['total' => $total]);
 }
 }

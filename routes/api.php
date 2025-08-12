@@ -92,6 +92,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/export/{id}', [StuntingPredictController::class, 'export']);
     Route::get('/history', [StuntingPredictController::class, 'history']);
     Route::get('/export/check/{id}', [StuntingPredictController::class, 'checkExport']);
+    Route::get('/refresh-token', [AuthController::class, 'refreshToken']);
     
     Route::prefix('admin')->group(function () {
         Route::get('/ortu-anak', [OrtuAnakController::class, 'index']);
@@ -99,6 +100,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/ortu-anak/{id_ota}', [OrtuAnakController::class, 'show']);
         Route::put('/ortu-anak/{id_ota}', [OrtuAnakController::class, 'update']);
         Route::delete('/ortu-anak/{id_ota}', [OrtuAnakController::class, 'destroy']);
+        Route::get('/orangtua-anak/total', [OrtuAnakController::class, 'getTotalBalita']);
+
         Route::get('/history', [StuntingPredictController::class, 'adminHistory']);
         Route::get('/riwayat-klasifikasi/total', [StuntingPredictController::class, 'getTotalRiwayat']);
     });

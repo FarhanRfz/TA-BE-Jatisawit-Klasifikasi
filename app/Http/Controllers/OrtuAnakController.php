@@ -11,7 +11,7 @@ class OrtuAnakController extends Controller
     public function __construct()
     {
         $this->middleware('auth'); // Pastikan hanya pengguna yang terautentikasi yang dapat mengakses controller ini
-    }   
+    }
 
     public function index()
     {
@@ -72,5 +72,16 @@ class OrtuAnakController extends Controller
         $ortuAnak->delete();
 
         return response()->json(['message' => 'Data berhasil dihapus']);
+    }
+
+    public function getTotalBalita()
+    {
+        $user = auth()->user();
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $total = OrtuAnak::count();
+        return response()->json(['total' => $total]);
     }
 }

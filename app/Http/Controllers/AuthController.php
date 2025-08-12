@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -220,4 +221,23 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'Profil berhasil diperbarui!']);
     }
+
+    public function refreshToken(Request $request)
+{
+    $token = $request->bearerToken();
+    if (!$token) {
+        return response()->json(['message' => 'Token tidak ditemukan'], 401);
+    }
+
+    $accessToken = PersonalAccessToken::findToken($token);
+    if (!$accessToken || !$accessToken->tokenable) {
+        return response()->json(['message' => 'Token tidak valid'], 401);
+    }
+
+    $user = $accessToken->tokenable;
+    Auth::login($user);
+
+    $newToken = $user->createToken('auth_token')->plainTextToken;
+    return response()->json(['token' => $newToken], 200)->header('Authorization', 'Bearer ' . explode('|', $newToken)[1]);
+}
 }

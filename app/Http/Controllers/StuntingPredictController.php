@@ -12,7 +12,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class StuntingPredictController extends Controller
 {
-    public function predict(Request $request)
+public function predict(Request $request)
 {
     // Validasi input dari frontend
     $request->validate([
@@ -69,7 +69,7 @@ class StuntingPredictController extends Controller
         'status_stunting' => $stuntingStatus,
         'deskripsi_status' => $deskripsiStatus,
         'waktu_klasifikasi' => now(),
-        'exported' => true, // Set sebagai exported karena file dibuat otomatis
+        'exported' => true,
     ]);
 
     // Buat dan simpan file PDF otomatis
@@ -78,8 +78,12 @@ class StuntingPredictController extends Controller
         mkdir($directory, 0755, true);
     }
 
-    $pdf = Pdf::loadView('pdf.klasifikasi', ['data' => $classification]);
-    $filePath = 'exports/hasil_klasifikasi_' . $classification->id_ch . '_' . time() . '.pdf';
+    $pdf = Pdf::loadView('pdf.klasifikasi', ['data' => $classification])
+        ->setPaper('a4')
+        ->setOption('margin-top', 20)
+        ->setOption('margin-bottom', 20);
+    $fileName = 'hasil_klasifikasi_' . $classification->id_ch . '_' . time() . '.pdf';
+    $filePath = 'exports/' . $fileName;
     $fullPath = storage_path('app/public/' . $filePath);
     $pdf->save($fullPath);
     $classification->update(['file_path' => $filePath]);
@@ -88,10 +92,11 @@ class StuntingPredictController extends Controller
         'status' => $stuntingStatus,
         'deskripsi_status' => $deskripsiStatus,
         'classification_id' => $classification->id_ch,
+        'pdf_url' => asset('storage/' . $filePath), // Tambahkan URL untuk akses PDF
     ]);
 }
 
-    public function export($id)
+public function export($id)
 {
     $classification = ClassificationHistory::where('id_ch', $id)
         ->where('id_users', Auth::id())
